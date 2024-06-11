@@ -9,83 +9,80 @@
 <body class="bg-gray-100 p-6">
 
 <?php
-function calcularPrecio($consumo, $peso, $color) {
-    $preciosConsumo = [
-        'A' => 100,
-        'B' => 80,
-        'C' => 60,
-    ];
-
-    $preciosPeso = [
-        '0-19' => 10,
-        '20-49' => 50,
-    ];
-
-    $descuentosColor = [
-        'blanco' => 0.05,
-        'gris' => 0.07,
-        'negro' => 0.10,
-    ];
-
-    $precioBase = $preciosConsumo[$consumo];
-
-    if ($peso >= 0 && $peso <= 19) {
-        $precioBase += $preciosPeso['0-19'];
-    } else if ($peso >= 20 && $peso <= 49) {
-        $precioBase += $preciosPeso['20-49'];
-    }
-
-    $descuento = $precioBase * $descuentosColor[$color];
-    $precioFinal = $precioBase - $descuento;
-
-    return $precioFinal;
-}
-
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $nombre = $_POST['nombre'];
-    $color = $_POST['color'];
+    $color = strtolower($_POST['color']);
     $consumo = $_POST['consumo'];
     $peso = $_POST['peso'];
-
-    // Validar nombre solo contiene letras
-    if (!preg_match("/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/", $nombre)) {
-        $nombreError = "El nombre solo puede contener letras y espacios.";
-    }
-
-    // Validar peso es un número válido
-    if (!filter_var($peso, FILTER_VALIDATE_FLOAT) || $peso < 0) {
-        $pesoError = "El peso debe ser un número válido y no negativo.";
-    }
 
     // Validar y asignar valores por defecto
     if (!in_array($consumo, ['A', 'B', 'C'])) {
         $consumo = 'C';
     }
 
-    $color = strtolower($color);
+    if ($peso < 0 || $peso > 49) {
+        $peso = 1;
+    }
+
     if (!in_array($color, ['blanco', 'gris', 'negro'])) {
         $color = 'blanco';
     }
 
-    if (empty($nombreError) && empty($pesoError)) {
-        $precioFinal = calcularPrecio($consumo, $peso, $color);
+    // Tabla de precios por consumo energético
+    $preciosConsumo = [
+        'A' => 100,
+        'B' => 80,
+        'C' => 60
+    ];
 
-        echo "<div class='max-w-md mx-auto bg-white p-6 rounded-lg shadow-md mb-4'>";
-        echo "<h2 class='text-2xl font-bold mb-4'>Datos recibidos:</h2>";
-        echo "<p><strong>Nombre del Electrodoméstico:</strong> " . htmlspecialchars($nombre) . "</p>";
-        echo "<p><strong>Color:</strong> " . htmlspecialchars($color) . "</p>";
-        echo "<p><strong>Consumo Energético:</strong> " . htmlspecialchars($consumo) . "</p>";
-        echo "<p><strong>Peso (kg):</strong> " . htmlspecialchars($peso) . "</p>";
-        echo "<p><strong>Precio Final:</strong> $" . number_format($precioFinal, 2) . "</p>";
-        echo "</div>";
+    // Tabla de precios por peso
+    if ($peso <= 10) {
+        $precioPeso = 1;
+    } elseif ($peso <= 20) {
+        $precioPeso = 2;
+    } elseif ($peso <= 30) {
+        $precioPeso = 3;
+    } elseif ($peso <= 40) {
+        $precioPeso = 4;
     } else {
-        if (!empty($nombreError)) {
-            echo "<p class='text-red-500'>" . htmlspecialchars($nombreError) . "</p>";
-        }
-        if (!empty($pesoError)) {
-            echo "<p class='text-red-500'>" . htmlspecialchars($pesoError) . "</p>";
-        }
+        $precioPeso = 5;
     }
+
+    // Calcular precio del producto
+    $precioProducto = $preciosConsumo[$consumo] * $precioPeso;
+
+    // Tabla de descuentos por color (en porcentaje)
+    $descuentos = [
+        'blanco' => 5,
+        'gris' => 10,
+        'negro' => 15
+    ];
+
+    // Calcular descuento
+    $descuento = ($precioProducto * $descuentos[$color]) / 100;
+    $precioFinal = $precioProducto - $descuento;
+
+    // Almacenar información en un array asociativo
+    $electrodomestico = [
+        'nombre' => $nombre,
+        'color' => $color,
+        'consumo' => $consumo,
+        'peso' => $peso,
+        'precio_producto' => $precioProducto,
+        'descuento' => $descuento,
+        'precio_final' => $precioFinal
+    ];
+
+    echo "<div class='max-w-md mx-auto bg-white p-6 rounded-lg shadow-md mb-4'>";
+    echo "<h2 class='text-2xl font-bold mb-4'>Datos recibidos:</h2>";
+    echo "<p><strong>Nombre del Electrodoméstico:</strong> " . htmlspecialchars($electrodomestico['nombre']) . "</p>";
+    echo "<p><strong>Color:</strong> " . htmlspecialchars($electrodomestico['color']) . "</p>";
+    echo "<p><strong>Consumo Energético:</strong> " . htmlspecialchars($electrodomestico['consumo']) . "</p>";
+    echo "<p><strong>Peso (kg):</strong> " . htmlspecialchars($electrodomestico['peso']) . "</p>";
+    echo "<p><strong>Precio del Producto:</strong> $" . htmlspecialchars(number_format($electrodomestico['precio_producto'], 2)) . "</p>";
+    echo "<p><strong>Descuento:</strong> $" . htmlspecialchars(number_format($electrodomestico['descuento'], 2)) . " (" . $descuentos[$color] . "%)</p>";
+    echo "<p><strong>Precio Final:</strong> $" . htmlspecialchars(number_format($electrodomestico['precio_final'], 2)) . "</p>";
+    echo "</div>";
 }
 ?>
 
@@ -116,18 +113,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <button type="submit" class="w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Enviar</button>
     </form>
 </div>
-<div>
 </body>
 </html>
 <body class="bg-gray-100 p-6">
     <div class="flex flex-wrap justify-center space-x-4">
         <div class="bg-white p-4 rounded-md shadow-md w-72">
-            <h2 class="text-lg font-bold mb-4">Tabla de Colores</h2>
+            <h2 class="text-lg font-bold mb-4">Tabla de colores</h2>
             <table class="table-auto w-full text-left text-sm">
                 <thead>
                     <tr>
                         <th class="px-2 py-1 border">Color</th>
-                        <th class="px-2 py-1 border">Porcentaje de Descuento del valor del producto</th>
+                        <th class="px-2 py-1 border">Porcentaje de descuento del valor del producto</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -148,7 +144,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </div>
 
         <div class="bg-white p-4 rounded-md shadow-md w-72">
-            <h2 class="text-lg font-bold mb-4">Tabla de Consumo Energético</h2>
+            <h2 class="text-lg font-bold mb-4">Tabla de consumo energetico</h2>
             <table class="table-auto w-full text-left text-sm">
                 <thead>
                     <tr>
@@ -189,11 +185,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     </tr>
                     <tr>
                         <td class="px-2 py-1 border">entre 20 y 49 kg</td>
-                        <td class ="px-2 py-1 border">50$</td>
+                        <td class="px-2 py-1 border">50$</td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </div>
 </body>
-</html>
