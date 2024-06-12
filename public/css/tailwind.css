@@ -762,6 +762,10 @@ select {
   margin-top: 0.25rem;
 }
 
+.mt-6 {
+  margin-top: 1.5rem;
+}
+
 .block {
   display: block;
 }
@@ -772,10 +776,6 @@ select {
 
 .table {
   display: table;
-}
-
-.hidden {
-  display: none;
 }
 
 .w-72 {
@@ -899,11 +899,6 @@ select {
 .text-white {
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity));
-}
-
-.text-red-500 {
-  --tw-text-opacity: 1;
-  color: rgb(239 68 68 / var(--tw-text-opacity));
 }
 
 .shadow-md {
